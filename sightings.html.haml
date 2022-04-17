@@ -1,0 +1,103 @@
+:javascript
+  POKEMON_SIGHTINGS_API_PT = "/api/pokemon_sightings";
+  GOOGLE_API_KEY = "AIzaSyC8N5CZonTR0w7ezp2y6PSPkwcEJxbR7DI";
+  POKEDEX_URL = "https://pokeapi.co/api/v2/pokemon/";
+  GEO_DISTANCE_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
+  
+  let el = $(".template");
+
+  $(function() {
+    console.log("#2 POKEMON SIGHTINGS");
+    loadGoogleMaps();
+  });
+
+  // Loads the Maps Javascript API 
+  // https://developers.google.com/maps/documentation/javascript
+  loadGoogleMaps = function() {
+    var script;
+    script = $("<script>").attr('src', 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_API_KEY + '&libraries=geometry&callback=initMap').attr('async', 'async');
+    return $("head").append(script);
+  };
+  initMap = function() {
+    console.log("GMaps loaded");
+    return main();
+  };
+
+  // This function is called onced the Maps JS API has loaded.
+  main = function() {
+    // TODO - YOUR CODE HERE
+     navigator.geolocation.getCurrentPosition((e)=>{
+     let {coords} = e;
+     let {latitude:lat, longitude: long} = coords
+     
+     calculateDistance(lat,long);
+   }, (e)=>{
+     console.warn(e);
+   })
+  };
+
+    calculateDistance = function(lat,long){
+    $.getJSON(POKEMON_SIGHTINGS_API_PT, function(resp) {
+      _.each(resp,function(loc){
+        let l = loc.coord
+        let id = loc.pokemon
+        let [lt,ln] = l.split(",")
+        lt = lt.substring(1);
+        calculateDistance([lt,ln],id,[lat,long])
+      })
+      
+    })
+
+    calculateDistance = function(coords,id,main){
+      let distance = google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(coords[0], coords[1]), new google.maps.LatLng(main[0], main[1]));
+      let distanseInMiles = parseInt(distance*0.000621371)
+      $.getJSON(POKEDEX_URL+id,function(res){
+        let el = $(".template").clone().removeClass("template").html(`
+        <td>
+          <img src="${res.sprites.front_default}" alt="${res.name}"/>
+        </td>
+        <td>
+          <div class="ui statistic">
+            <div class="label">Distance Away</div>
+            <div class="value">
+              <span class="distance">${distanseInMiles} Miles</span>
+            </div>
+          </div>
+        </td>
+        `);
+        $("table.fw").append(el[0]);
+      })
+    }
+  }
+
+    
+          
+/ DO NOT MODIFY CODE UNDER THIS LINE      
+/ ----------------------------------
+
+/ POKEMON SIGHTINGS
+.ui.grid.centered
+  #sightings.panel.fw
+    %h1.header.ui Pokemon Sightings
+    %table.fw
+      / ROW TEMPLATE
+      / Remove the .template class to view the starter HTML
+      %tr.template
+        %td 
+          %img{src: "", alt:"todo:pokemon's name"}
+        %td 
+          .ui.statistic
+            .label Distance Away
+            .value
+              %span.distance -
+              
+:scss
+  .panel{
+    margin-top: 60px;
+  }
+  .fw{ /* Full Width */
+    width: 100%;
+  }
+  .template{
+    display: none;
+  }
