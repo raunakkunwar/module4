@@ -1,0 +1,156 @@
+:javascript
+  var aws_wss = "ws://162.243.120.86:3010"
+  window.socket = undefined;
+  
+  // alertify.notify("Hello World");
+  $("form").submit(function(event){event.preventDefault(); });
+  //YOUR CODE HERE
+    
+  var connectionBtn = "";
+  var socket = undefined;
+  var requestObject = {};
+  // creating socket connnection
+  function start_socket(){
+    var websocket  =  new WebSocket(aws_wss);
+    // on socket open
+    websocket.onopen = function(){
+      console.log("OPEND WEBSOCKET");
+      connectionBtn.addClass("green disabled").removeClass('red');
+    }
+    // on socket close
+    websocket.onclose = function(){
+      connectionBtn.removeClass("green disabled").addClass('red');
+    }
+    // on socket message
+    websocket.onmessage = function(res){
+      console.log("Server >>", JSON.parse(res.data));
+    }
+    // on socket error
+    websocket.onerror = function(err){
+      alertify.message("Something went wrong with socket connection");
+    }
+
+    return websocket;
+  }
+  
+  $(function(){
+    // Handling connection button
+    connectionBtn = $("#connect");
+    connectionBtn.on("click", function(e){
+    e.preventDefault();
+    alertify.message("Connecting to socket");
+    $(this).addClass("green disabled");
+    window.socket = true;
+    // upto here
+    socket = start_socket();
+    if(socket.readyState == WebSocket.OPEN){
+        socket.send(JSON.stringify(requestObject));
+    } 
+  });
+  
+  // handling directional-pad buttons
+  $("#directional-pad button").on('click', function(){
+    requestObject['remote_id'] = $("input[name='remote_id']").val();
+    requestObject['action'] = 'move';
+    requestObject['direction'] = $(this).attr('name');
+    requestObject['color_id'] = $("input[name='color_id']").val();
+    
+    // Validation
+    if(typeof socket !="object"){
+      // alertify.error("Socket does not exist. Connect first");
+      alertify.error("Socket is not connected");
+      return;
+    }
+    if(!requestObject.remote_id){
+      alertify.error("Please specify a remote ID");
+      return;
+    }
+    // upto here
+    socket.send(JSON.stringify(requestObject));
+    console.log("Server << " + JSON.stringify(requestObject));
+  });
+  })
+  
+  
+  
+  
+  
+  
+  
+/ DO NOT MODIFY CODE BELOW THIS LINE
+.mobile
+  .hero
+    %form#remote.ui.form
+      %input{name: "action", type:"hidden", value:"move"}
+      .field
+        .ui.input.action.fluid
+          %input{name: "remote_id", type:"number", placeholder: "ID"}
+          %button.ui.button#connect Connect
+        .field
+          %input.ui.input{name: "color_id", type:"color"}
+          
+    .field#directional-pad
+      %button.ui.button.icon.circular.dummy
+        %i.icon
+      %button.ui.button.icon.circular{name:"up"}
+        %i.icon.arrow.alternate.circle.up
+      %button.ui.button.icon.circular.dummy
+        %i.icon
+      %button.ui.button.icon.circular{name:"left"}
+        %i.icon.arrow.alternate.circle.left
+      %button.ui.button.icon.circular.dummy
+        %i.icon
+      %button.ui.button.icon.circular{name:"right"}
+        %i.icon.arrow.alternate.circle.right
+      %button.ui.button.icon.circular.dummy
+        %i.icon
+      %button.ui.button.icon.circular{name:"down"}
+        %i.icon.arrow.alternate.circle.down
+      %button.ui.button.icon.circular.dummy
+        %i.icon
+      
+:scss
+  html{
+    font-size: 18pt; /* Root size */
+  }
+  
+  html, body, .mobile{
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+  }
+  input[type="color"]{
+    height: 60px;
+  }
+  #remote{
+    width: 100%;
+  }
+  .hero{
+    padding: 30px;
+    height: 100%; 
+    width: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  #directional-pad{
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    width: 100%;
+    height: 100%;
+    button{
+      margin: 0;
+      flex-basis: 33.33%;
+      height: 90px;
+      font-size: 2em;
+      &.dummy{
+        visibility: hidden;
+      }
+    }
+  }
+    
